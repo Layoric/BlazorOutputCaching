@@ -82,10 +82,9 @@ app.UseStaticFiles();
 app.UseAntiforgery();
 app.UseOutputCache();
 
-
-
-// If I comment this line below, output cache no longer works..?
+// Required for OutputCache
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
@@ -99,8 +98,7 @@ app.UseServiceStack(new AppHost(), options => {
     {
         handlerBuilder.CacheOutput(policyBuilder =>
         {
-            policyBuilder.Cache().Expire(TimeSpan.FromSeconds(15))
-                .With(x => x.HttpContext.Request.Path.StartsWithSegments("/api"));
+            policyBuilder.Cache().Expire(TimeSpan.FromSeconds(15));
         });
     });
 });
