@@ -58,16 +58,11 @@ public class RedisOutputCacheStore : IOutputCacheStore
         await using var redis = await _redisManager.GetClientAsync(token: cancellationToken);
         
         var keys = await redis.GetAllItemsFromListAsync($"tag:{tag}", cancellationToken);
-
-        var strList = keys.Select(x => x.ConvertTo<string>());
-
-        var pipelineAsync = redis.CreatePipeline();
-        foreach (var key in strList)
+        
+        foreach (var key in keys)
         {
-            pipelineAsync.QueueCommand(async => async.RemoveEntryAsync(key));
-            pipelineAsync.QueueCommand(async => async.RemoveItemFromSetAsync($"tag:{tag}", key, cancellationToken));
+            await redis.RemoveEntryAsync(key);
+            await redis.RemoveItemFromSetAsync($"tag:{tag}", key, cancellationToken);
         }
-
-        await pipelineAsync.FlushAsync(cancellationToken);
     }
 }
