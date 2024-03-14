@@ -14,4 +14,10 @@
         <Folder Include="Types\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Reference Include="Microsoft.AspNetCore.OutputCaching">
+        <HintPath>..\..\..\..\.dotnet\packs\Microsoft.AspNetCore.App.Ref\8.0.2\ref\net8.0\Microsoft.AspNetCore.OutputCaching.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>

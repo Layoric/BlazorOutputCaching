@@ -17,8 +17,8 @@ var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 var config = builder.Configuration;
 
-services.AddSingleton<IRedisClientsManager>(new BasicRedisClientManager());
-services.AddSingleton<IOutputCacheStore, RedisOutputCacheStore>();
+//services.AddSingleton<IRedisClientsManager>(new BasicRedisClientManager());
+//services.AddSingleton<IOutputCacheStore, MemoryOutp>();
 
 services.AddOutputCache();
 
@@ -94,12 +94,26 @@ app.MapAdditionalIdentityEndpoints();
 
 app.UseServiceStack(new AppHost(), options => {
     options.MapEndpoints();
-    options.RouteHandlerBuilders.Add((handlerBuilder, operation, verb, route) =>
+    options.RouteHandlerBuilders.Add((routeHandlerBuilder, operation, verb, route) =>
     {
-        handlerBuilder.CacheOutput(policyBuilder =>
+        // Initialize appHost and allServiceTypes
+        var appHost = HostContext.AppHost;
+        // Find the service matching the RequestType of the operation
+        var operationType = operation.RequestType;
+        // Match with operation, verb and route
+        appHost.Metadata.OperationsMap.TryGetValue(operationType, out var operationMap);
+        var serviceType = operationMap?.ServiceType;
+        if (serviceType == null)
+            return;
+        if (serviceType.HasAttributeOf<OutputCacheAttribute>())
         {
-            policyBuilder.Cache().Expire(TimeSpan.FromSeconds(15));
-        });
+            // Handle duration from OutputCacheAttribute
+            var outputCacheAttribute = serviceType.FirstAttribute<OutputCacheAttribute>();
+            routeHandlerBuilder.CacheOutput(policyBuilder =>
+            {
+                policyBuilder.Cache().Expire(TimeSpan.FromSeconds(outputCacheAttribute.Duration));
+            });
+        }
     });
 });
 
